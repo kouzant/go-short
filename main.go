@@ -115,6 +115,6 @@ func (h *RedirectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if error != nil {
 		fmt.Fprintf(w, "Error: %v", error)
 	} else {
-		http.Redirect(w, r, value.(string), http.StatusMovedPermanently)
+		http.Redirect(w, r, value.(string), http.StatusTemporaryRedirect)
 	}
 }
