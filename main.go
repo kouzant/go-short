@@ -51,11 +51,6 @@ func main() {
 	}
 	defer stateStore.Close()
 
-	item := &storage.StorageItem{
-		storage.StorageKey("lala"),
-		storage.StorageValue("https://logicalclocks.com")}
-	stateStore.Save(item)
-	
 	if serverMode.Parsed() {
 		// Trap exit signal
 		sigs := make(chan os.Signal, 1)
@@ -87,14 +82,22 @@ func main() {
 				clientMode.PrintDefaults()
 				os.Exit(1)
 			}
-			fmt.Printf("op: add key: %s url: %s\n", *keyArg, *valueArg)
+			err := stateStore.Save(storage.NewStorageItem(*keyArg, *valueArg))
+			if err != nil {
+				fmt.Println("> ERROR: Save operation could not complete, reason: ", err)
+			}
+			fmt.Println("> Added <", *keyArg, ", ", *valueArg, "> to go-short!")
 		case "delete":
 			fmt.Println("op delete")
 			if *keyArg == "" {
 				clientMode.PrintDefaults()
 				os.Exit(2)
 			}
-			fmt.Printf("op delete key: %s\n", *keyArg)
+			value, err := stateStore.Delete(storage.StorageKey(*keyArg))
+			if err != nil {
+				fmt.Println("> ERROR: Could not delete key ", *keyArg, ", reason: ", err)
+			}
+			fmt.Println("> Deleted <", *keyArg, ", ", value, "> from go-short!")
 		default:
 			clientMode.PrintDefaults()
 			os.Exit(1)

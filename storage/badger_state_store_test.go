@@ -39,7 +39,7 @@ func TestWriteReadBadger(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		item := &StorageItem{StorageKey(test.key), StorageValue(test.value)}
+		item := NewStorageItem(test.key, test.value)
 		if test.shouldWrite {
 			saveError := stateStore.Save(item)
 			if saveError != test.saveError {
@@ -73,8 +73,8 @@ func TestDeleteBadger(t *testing.T) {
 		t.Errorf("stateStore.Init() failed with %s", err)
 	}
 	defer stateStore.Close()
-	
-	item := &StorageItem{StorageKey("key"), StorageValue("value")}
+
+	item := NewStorageItem("key", "value")
 	error := stateStore.Save(item)
 	if error != nil {
 		t.Errorf("stateStore.Save(%v) did not expect any error but gotten %v", item, error)

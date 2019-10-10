@@ -10,6 +10,10 @@ type StorageItem struct {
 	Value StorageValue
 }
 
+func NewStorageItem(key, value string) *StorageItem {
+	return &StorageItem{StorageKey(key), StorageValue(value)}
+}
+
 type KeyAlreadyExists struct {
 	Key StorageKey
 }
