@@ -1,0 +1,12 @@
+[Unit]
+Description = go-short. Simplistic Go URL shortener
+After = syslog.target network.target
+
+[Service]
+User = antonis
+ExecStart = /usr/share/go-short/go-short server
+
+Type = simple
+
+[Install]
+WantedBy = multi-user.target
