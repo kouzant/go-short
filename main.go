@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"os/signal"
+	"syscall"
 	
 	"github.com/kouzant/go-short/context"
 	"github.com/kouzant/go-short/logger"
@@ -52,13 +54,27 @@ func main() {
 	stateStore.Save(item)
 	
 	if serverMode.Parsed() {
-		fmt.Println("Server parsed")
+		// Trap exit signal
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		go func(){
+			sig := <- sigs
+			log.Infof("Received %s\n", sig)
+			if error := stateStore.Close(); error != nil {
+				log.Errorf("Error closing the state store %s\n", error)
+				os.Exit(2)
+			}
+			log.Info("Bye...")
+			os.Exit(0)
+		}()
+		
 		mux := http.NewServeMux()
 		rh := &RedirectHandler{stateStore: stateStore}
 		mux.Handle("/", rh)
 		listeningOn := fmt.Sprintf("%s:%d", conf.GetString(context.WebListenKey),
 			conf.GetInt(context.WebPortKey))
-		http.ListenAndServe(listeningOn, mux)
+		log.Info("Start listening on ", listeningOn)
+		log.Fatal(http.ListenAndServe(listeningOn, mux))
 	} else if clientMode.Parsed() {
 		fmt.Println("Client parsed")		
 		switch *opArg {
