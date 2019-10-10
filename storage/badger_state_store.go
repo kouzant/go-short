@@ -26,8 +26,16 @@ func (s *BadgerStateStore) Init() error {
 
 func (s *BadgerStateStore) Save(item *StorageItem) error {
 	err := s.db.Update(func(txn *badger.Txn) error {
-		err := txn.Set([]byte(string(item.Key)), []byte(item.Value.(string)))
-		return err
+		var key []byte = []byte(string(item.Key))
+		_, err := txn.Get(key)
+		if err != nil {
+			if err == badger.ErrKeyNotFound {
+				err = txn.Set([]byte(string(item.Key)), []byte(item.Value.(string)))
+				return err
+			}
+			return err
+		}
+		return KeyAlreadyExists{Key: item.Key}
 	})
 	return err
 }
@@ -37,6 +45,9 @@ func (s *BadgerStateStore) Load(key StorageKey) (StorageValue, error) {
 	err := s.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get([]byte(string(key)))
 		if err != nil {
+			if err == badger.ErrKeyNotFound {
+				return KeyNotFound{Key: key}
+			}
 			return err
 		}
 		valueCopy, err = item.ValueCopy(nil)
@@ -45,11 +56,30 @@ func (s *BadgerStateStore) Load(key StorageKey) (StorageValue, error) {
 		}
 		return nil
 	})
-	return string(valueCopy), err
+	if err != nil {
+		return nil, err
+	}
+	return StorageValue(string(valueCopy)), nil
 }
 
 func (s *BadgerStateStore) Delete(key StorageKey) (StorageValue, error) {
-	return nil, nil
+	item, err := s.Load(key)
+	if err != nil {
+		if _, ok := err.(KeyNotFound); ok {
+			return nil, nil
+		}
+		return nil, err
+	}
+	
+	err = s.db.Update(func(txn *badger.Txn) error {
+		err = txn.Delete([]byte(string(key)))
+		return err
+	})
+	
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
 }
 
 func (s *BadgerStateStore) Close() error {

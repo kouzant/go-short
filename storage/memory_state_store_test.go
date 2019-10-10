@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestWriteRead(t *testing.T) {
+func TestWriteReadMemory(t *testing.T) {
 	stateStore := &MemoryStateStore{}
 	stateStore.Init()
 	defer stateStore.Close()
@@ -44,7 +44,7 @@ func TestWriteRead(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
+func TestDeleteMemory(t *testing.T) {
 	stateStore := &MemoryStateStore{}
 	stateStore.Init()
 	defer stateStore.Close()
