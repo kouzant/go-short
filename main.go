@@ -44,8 +44,11 @@ func main() {
 	logger.Init(conf)
 	log.Info("Starting go-short")
 
-	stateStore := &storage.MemoryStateStore{Config: conf}
-	stateStore.Init()
+	stateStore := &storage.BadgerStateStore{Config: conf}
+	error := stateStore.Init()
+	if error != nil {
+		log.Fatal("Could not initialize state store ", error)
+	}
 	defer stateStore.Close()
 
 	item := &storage.StorageItem{

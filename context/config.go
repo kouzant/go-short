@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"os/user"
 	
 	"github.com/spf13/viper"
 )
@@ -34,4 +35,12 @@ func ReadConfig() *viper.Viper {
 		panic(fmt.Errorf("Fatal error: %s\n", err))
 	}
 	return viper
+}
+
+func getUserHome() string {
+	user, err := user.Current()
+	if err != nil {
+		return "unknown"
+	}
+	return user.HomeDir
 }
