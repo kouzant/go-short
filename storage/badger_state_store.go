@@ -62,6 +62,31 @@ func (s *BadgerStateStore) Load(key StorageKey) (StorageValue, error) {
 	return StorageValue(string(valueCopy)), nil
 }
 
+func (s *BadgerStateStore) LoadAll() ([]*StorageItem, error) {
+	storedItems := make([]*StorageItem, 0, 100)
+	
+	err := s.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchSize = 10
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			keyCopy := item.KeyCopy(nil)
+			valueCopy, err := item.ValueCopy(nil)
+			if err != nil {
+				return err
+			}
+			storedItems = append(storedItems, NewStorageItem(string(keyCopy), string(valueCopy)))
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return storedItems, nil
+}
+
 func (s *BadgerStateStore) Delete(key StorageKey) (StorageValue, error) {
 	item, err := s.Load(key)
 	if err != nil {

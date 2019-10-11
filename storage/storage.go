@@ -34,6 +34,7 @@ type StateStore interface {
 	Init() error
 	Save(item *StorageItem) error
 	Load(key StorageKey) (StorageValue, error)
+	LoadAll() ([]*StorageItem, error)
 	Delete(key StorageKey) (StorageValue, error)
 	Close() error
 }

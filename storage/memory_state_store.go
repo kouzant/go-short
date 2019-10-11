@@ -31,6 +31,14 @@ func (s *MemoryStateStore) Load(key StorageKey) (StorageValue, error) {
 	return nil, KeyNotFound{Key: key}
 }
 
+func (s *MemoryStateStore) LoadAll() ([]*StorageItem, error) {
+	storedItems := make([]*StorageItem, 0, len(s.db))
+	for key, value := range s.db {
+		storedItems = append(storedItems, &StorageItem{key, value})
+	}
+	return storedItems, nil
+}
+
 func (s *MemoryStateStore) Delete(key StorageKey) (StorageValue, error) {
 	if value, ok := s.db[key]; ok {
 		delete(s.db, key)

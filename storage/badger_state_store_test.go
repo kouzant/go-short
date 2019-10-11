@@ -59,6 +59,54 @@ func TestWriteReadBadger(t *testing.T) {
 	}
 }
 
+func TestListAllBadger(t *testing.T) {
+	dir, err := ioutil.TempDir("", "test_badger_state_store")
+	if err != nil {
+		t.Fatal("Error creating tmp directory for Badger")
+	}
+	config := createConfig(dir)
+	stateStore := &BadgerStateStore{Config: config}
+	defer os.RemoveAll(dir)
+	
+	err = stateStore.Init()
+	if err != nil {
+		t.Errorf("stateStore.Init() failed with %s", err)
+	}
+	defer stateStore.Close()	
+
+	numOfItems := 10
+	items := make([]A, 0, numOfItems)
+	for i := 0; i < numOfItems; i++ {
+		items = append(items, A{fmt.Sprintf("key_%d", i), fmt.Sprintf("value_%d", i)})
+	}
+
+	for _, i := range items {
+		item := NewStorageItem(i.key, i.value)
+		err := stateStore.Save(item)
+		if err != nil {
+			t.Errorf("stateStore.Save(%v) failed with %v", item, err)
+		}
+	}
+
+	storedItems, err := stateStore.LoadAll()
+	if err != nil {
+		t.Errorf("stateStore.LoadAll failed with %v", err)
+	}
+	for _, i := range items {
+		item := NewStorageItem(i.key, i.value)
+		found := false
+		for _, j := range storedItems {
+			if item.Key == j.Key && item.Value == j.Value {
+				found = true
+				break
+			}
+		}
+		if found == false {
+			t.Errorf("Item %v not found in stateStore.LoadAll() slice", item)
+		}
+	}
+}
+
 func TestDeleteBadger(t *testing.T) {
 	dir, err := ioutil.TempDir("", "test_badger_state_store")
 	if err != nil {

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"testing"
+	"fmt"
 )
 
 func TestWriteReadMemory(t *testing.T) {
@@ -40,6 +41,48 @@ func TestWriteReadMemory(t *testing.T) {
 		if test.want != value {
 			t.Errorf("stateStore.Load(%v) expected value %v - gotten %v",
 				item, test.want, value)
+		}
+	}
+}
+
+type A struct {
+	key string
+	value string
+}
+
+func TestListAllMemory(t *testing.T) {
+	stateStore := &MemoryStateStore{}
+	stateStore.Init()
+	defer stateStore.Close()
+	numOfItems := 10
+	items := make([]A, 0, numOfItems)
+	for i := 0; i < numOfItems; i++ {
+		items = append(items, A{fmt.Sprintf("key_%d", i), fmt.Sprintf("value_%d", i)})
+	}
+
+	for _, i := range items {
+		item := NewStorageItem(i.key, i.value)
+		err := stateStore.Save(item)
+		if err != nil {
+			t.Errorf("stateStore.Save(%v) failed with %v", item, err)
+		}
+	}
+
+	storedItems, err := stateStore.LoadAll()
+	if err != nil {
+		t.Errorf("stateStore.LoadAll failed with %v", err)
+	}
+	for _, i := range items {
+		item := NewStorageItem(i.key, i.value)
+		found := false
+		for _, j := range storedItems {
+			if item.Key == j.Key && item.Value == j.Value {
+				found = true
+				break
+			}
+		}
+		if found == false {
+			t.Errorf("Item %v not found in stateStore.LoadAll() slice", item)
 		}
 	}
 }

@@ -21,7 +21,7 @@ func main() {
 	clientMode := flag.NewFlagSet("client", flag.ExitOnError)
 	
 	// Client mode arguments
-	opArg := clientMode.String("operation", "add", "Operation (add | delete)")
+	opArg := clientMode.String("operation", "add", "Operation (add | delete | list)")
 	keyArg := clientMode.String("key", "", "Shortened URL key")
 	valueArg := clientMode.String("url", "", "URL")
 
@@ -74,30 +74,39 @@ func main() {
 		log.Info("Start listening on ", listeningOn)
 		log.Fatal(http.ListenAndServe(listeningOn, mux))
 	} else if clientMode.Parsed() {
-		fmt.Println("Client parsed")		
 		switch *opArg {
 		case "add":
-			fmt.Println("op add")
 			if *keyArg == "" || *valueArg == "" {
 				clientMode.PrintDefaults()
 				os.Exit(1)
 			}
 			err := stateStore.Save(storage.NewStorageItem(*keyArg, *valueArg))
 			if err != nil {
-				fmt.Println("> ERROR: Save operation could not complete, reason: ", err)
+				fmt.Printf("> ERROR: Save operation could not complete, reason: %s\n", err)
+				os.Exit(3)
 			}
 			fmt.Println("> Added <", *keyArg, ", ", *valueArg, "> to go-short!")
 		case "delete":
-			fmt.Println("op delete")
 			if *keyArg == "" {
 				clientMode.PrintDefaults()
 				os.Exit(2)
 			}
 			value, err := stateStore.Delete(storage.StorageKey(*keyArg))
 			if err != nil {
-				fmt.Println("> ERROR: Could not delete key ", *keyArg, ", reason: ", err)
+				fmt.Printf("> ERROR: Could not delete key ", *keyArg, ", reason: %s\n", err)
+				os.Exit(3)
 			}
-			fmt.Println("> Deleted <", *keyArg, ", ", value, "> from go-short!")
+			fmt.Println("> Deleted ", value, " from go-short!")
+		case "list":
+			storedItems, err := stateStore.LoadAll()
+			if err != nil {
+				fmt.Printf("> ERROR: Could not list all URLs, reason %s\n", err)
+				os.Exit(3)
+			}
+			fmt.Printf("> Number of shortened URLs: %d\n", len(storedItems))
+			for _, item := range storedItems {
+				fmt.Printf("> Short: %s\t URL: %s\n", item.Key, item.Value)
+			}
 		default:
 			clientMode.PrintDefaults()
 			os.Exit(1)
