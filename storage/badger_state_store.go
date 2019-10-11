@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"time"
+	
 	"github.com/kouzant/go-short/context"
 	
 	"github.com/spf13/viper"
@@ -11,10 +13,11 @@ import (
 type BadgerStateStore struct {
 	Config *viper.Viper
 	db *badger.DB
+	ticker *time.Ticker
 }
 
 func (s *BadgerStateStore) Init() error {
-	stateStoreDir := s.Config.GetString(context.StateStoreKey)
+	stateStoreDir := s.Config.GetString(context.StateStorePathKey)
 	log.Infof("Loading state store from %s", stateStoreDir)
 	options := badger.DefaultOptions(stateStoreDir)
 	options.Logger = log.StandardLogger()
@@ -23,7 +26,24 @@ func (s *BadgerStateStore) Init() error {
 		return err
 	}
 	s.db = db
+	gcInterval, err := time.ParseDuration(s.Config.GetString(context.StateStoreGCKey))
+	if err != nil {
+		gcInterval = 1 * time.Hour
+	}
+	s.ticker = time.NewTicker(gcInterval)
+	go s.startGCRoutine()
+	
 	return nil
+}
+
+func (s *BadgerStateStore) startGCRoutine() {
+	for range s.ticker.C {
+	again:
+		err := s.db.RunValueLogGC(0.5)
+		if err == nil {
+			goto again
+		}
+	}
 }
 
 func (s *BadgerStateStore) Save(item *StorageItem) error {
@@ -110,6 +130,7 @@ func (s *BadgerStateStore) Delete(key StorageKey) (StorageValue, error) {
 }
 
 func (s *BadgerStateStore) Close() error {
+	s.ticker.Stop()
 	if s.db != nil {
 		return s.db.Close()
 	}

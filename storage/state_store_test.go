@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/spf13/viper"
+	"github.com/kouzant/go-short/context"
 )
 
 func TestWriteRead(t *testing.T) {
@@ -186,7 +187,8 @@ func createConfig(dir string) *viper.Viper {
 	fmt.Println("TMP dir: ", dir)
 	vp := viper.New()
 	vp.SetConfigType("yaml")
-	vp.Set("go-short.state-store", dir)
+	vp.Set(context.StateStorePathKey, dir)
+	vp.Set(context.StateStoreGCKey, "2s")
 	return vp
 }
 

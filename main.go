@@ -93,7 +93,7 @@ func main() {
 			}
 			value, err := stateStore.Delete(storage.StorageKey(*keyArg))
 			if err != nil {
-				fmt.Printf("> ERROR: Could not delete key ", *keyArg, ", reason: %s\n", err)
+				fmt.Printf("> ERROR: Could not delete key %s reason: %s\n", *keyArg, err)
 				os.Exit(3)
 			}
 			fmt.Println("> Deleted ", value, " from go-short!")

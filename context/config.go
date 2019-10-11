@@ -13,7 +13,10 @@ const (
 	configRoot = AppName + "."
 
 	LogLevelKey = configRoot + "log-level"
-	StateStoreKey = configRoot + "state-store"
+
+	stateStore = configRoot + "state-store."
+	StateStorePathKey = stateStore + "path"
+	StateStoreGCKey = stateStore + "gc-interval"
 	
 	web = configRoot + "webserver."
 	WebListenKey = web + "listen"
@@ -27,7 +30,8 @@ func ReadConfig() *viper.Viper {
 	viper.AddConfigPath("$HOME/.go-short")
 
 	viper.SetDefault(LogLevelKey, "info")
-	viper.SetDefault(StateStoreKey, "~/.go-short/state-store")
+	viper.SetDefault(StateStorePathKey, "~/.go-short/state-store")
+	viper.SetDefault(StateStoreGCKey, "1h")
 	viper.SetDefault(WebListenKey, "localhost")
 	viper.SetDefault(WebPortKey, "80")
 	
