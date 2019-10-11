@@ -9,21 +9,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-func TestWriteReadBadger(t *testing.T) {
-	dir, err := ioutil.TempDir("", "test_badger_state_store")
-	if err != nil {
-		t.Fatal("Error creating tmp directory for Badger")
-	}
-	config := createConfig(dir)
-	stateStore := &BadgerStateStore{Config: config}
-	defer os.RemoveAll(dir)
-	
-	err = stateStore.Init()
-	if err != nil {
-		t.Errorf("stateStore.Init() failed with %s", err)
-	}
-	defer stateStore.Close()
+func TestWriteRead(t *testing.T) {
+	testWriteReadBadger(t)
+	testWriteReadMemory(t)	
+}
 
+func TestListAll(t *testing.T) {
+	testListAllBadger(t)
+	testListAllMemory(t)
+}
+
+func TestDelete(t *testing.T) {
+	testDeleteBadger(t)
+	testDeleteMemory(t)
+}
+
+func testWriteRead(t *testing.T, stateStore StateStore) {
 	var tests = []struct{
 		key string
 		value string
@@ -56,24 +57,15 @@ func TestWriteReadBadger(t *testing.T) {
 			t.Errorf("stateStore.Load(%v) expected value %v - gotten %v",
 				item, test.want, value)
 		}
-	}
+	}	
 }
 
-func TestListAllBadger(t *testing.T) {
-	dir, err := ioutil.TempDir("", "test_badger_state_store")
-	if err != nil {
-		t.Fatal("Error creating tmp directory for Badger")
-	}
-	config := createConfig(dir)
-	stateStore := &BadgerStateStore{Config: config}
-	defer os.RemoveAll(dir)
-	
-	err = stateStore.Init()
-	if err != nil {
-		t.Errorf("stateStore.Init() failed with %s", err)
-	}
-	defer stateStore.Close()	
+type A struct {
+	key string
+	value string
+}
 
+func testListAll(t *testing.T, stateStore StateStore) {
 	numOfItems := 10
 	items := make([]A, 0, numOfItems)
 	for i := 0; i < numOfItems; i++ {
@@ -107,21 +99,7 @@ func TestListAllBadger(t *testing.T) {
 	}
 }
 
-func TestDeleteBadger(t *testing.T) {
-	dir, err := ioutil.TempDir("", "test_badger_state_store")
-	if err != nil {
-		t.Fatal("Error creating tmp directory for Badger")
-	}
-	defer os.RemoveAll(dir)
-	
-	config := createConfig(dir)
-	stateStore := &BadgerStateStore{Config: config}
-	err = stateStore.Init()
-	if err != nil {
-		t.Errorf("stateStore.Init() failed with %s", err)
-	}
-	defer stateStore.Close()
-
+func testDelete(t *testing.T, stateStore StateStore) {
 	item := NewStorageItem("key", "value")
 	error := stateStore.Save(item)
 	if error != nil {
@@ -148,7 +126,60 @@ func TestDeleteBadger(t *testing.T) {
 	_, error = stateStore.Load(item.Key)
 	if _, ok := error.(KeyNotFound); !ok {
 		t.Errorf("Load(%v) after Delete(%v) expected %v", item, item, KeyNotFound{})
+	}	
+}
+
+func testWriteReadBadger(t *testing.T) {
+	stateStore, dir := createBadgerStateStore(t)
+	defer os.RemoveAll(dir)
+	defer stateStore.Close()
+	testWriteRead(t, stateStore)
+}
+
+func testWriteReadMemory(t *testing.T) {
+	stateStore := createMemoryStateStore(t)
+	defer stateStore.Close()
+	testWriteRead(t, stateStore)
+}
+
+func testListAllBadger(t *testing.T) {
+	stateStore, dir := createBadgerStateStore(t)
+	defer os.RemoveAll(dir)
+	defer stateStore.Close()
+	testListAll(t, stateStore)
+}
+
+func testListAllMemory(t *testing.T) {
+	stateStore := createMemoryStateStore(t)
+	defer stateStore.Close()
+	testListAll(t, stateStore)
+}
+
+func testDeleteBadger(t *testing.T) {
+	stateStore, dir := createBadgerStateStore(t)
+	defer os.RemoveAll(dir)
+	defer stateStore.Close()
+	testDelete(t, stateStore)	
+}
+
+func testDeleteMemory(t *testing.T) {
+	stateStore := createMemoryStateStore(t)
+	defer stateStore.Close()
+	testDelete(t, stateStore)	
+}
+
+func createBadgerStateStore(t *testing.T) (StateStore, string) {
+	dir, err := ioutil.TempDir("", "test_badger_state_store")
+	if err != nil {
+		t.Fatal("Error creating tmp directory for Badger")
 	}
+	config := createConfig(dir)
+	stateStore := &BadgerStateStore{Config: config}
+	err = stateStore.Init()
+	if err != nil {
+		t.Errorf("stateStore.Init() failed with %s", err)
+	}
+	return stateStore, dir
 }
 
 func createConfig(dir string) *viper.Viper {
@@ -157,4 +188,10 @@ func createConfig(dir string) *viper.Viper {
 	vp.SetConfigType("yaml")
 	vp.Set("go-short.state-store", dir)
 	return vp
+}
+
+func createMemoryStateStore(t *testing.T) StateStore {
+	stateStore := &MemoryStateStore{}
+	stateStore.Init()
+	return stateStore
 }
