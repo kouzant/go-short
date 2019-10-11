@@ -16,7 +16,9 @@ type BadgerStateStore struct {
 func (s *BadgerStateStore) Init() error {
 	stateStoreDir := s.Config.GetString(context.StateStoreKey)
 	log.Infof("Loading state store from %s", stateStoreDir)
-	db, err := badger.Open(badger.DefaultOptions(stateStoreDir))
+	options := badger.DefaultOptions(stateStoreDir)
+	options.Logger = log.StandardLogger()
+	db, err := badger.Open(options)
 	if err != nil {
 		return err
 	}
