@@ -67,8 +67,11 @@ func main() {
 		}()
 		
 		mux := http.NewServeMux()
-		handler := &handlers.GoShortHandler{StateStore: stateStore}
-		mux.Handle("/", handler)
+		redirectHandler := &handlers.RedirectHandler{StateStore: stateStore}
+		adminHandler := &handlers.AdminHandler{StateStore: stateStore}
+		mux.Handle("/", redirectHandler)
+		mux.Handle("/_admin", adminHandler)
+		
 		listeningOn := fmt.Sprintf("%s:%d", conf.GetString(context.WebListenKey),
 			conf.GetInt(context.WebPortKey))
 		log.Info("Start listening on ", listeningOn)
