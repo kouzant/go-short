@@ -5,11 +5,11 @@ import (
 	"os"
 	"fmt"
 	"net/http"
-	"strings"
 	"os/signal"
 	"syscall"
 	
 	"github.com/kouzant/go-short/context"
+	"github.com/kouzant/go-short/context/handlers"
 	"github.com/kouzant/go-short/logger"
 	"github.com/kouzant/go-short/storage"	
 	log "github.com/sirupsen/logrus"	
@@ -67,8 +67,8 @@ func main() {
 		}()
 		
 		mux := http.NewServeMux()
-		rh := &RedirectHandler{stateStore: stateStore}
-		mux.Handle("/", rh)
+		handler := &handlers.GoShortHandler{StateStore: stateStore}
+		mux.Handle("/", handler)
 		listeningOn := fmt.Sprintf("%s:%d", conf.GetString(context.WebListenKey),
 			conf.GetInt(context.WebPortKey))
 		log.Info("Start listening on ", listeningOn)
@@ -111,19 +111,5 @@ func main() {
 			clientMode.PrintDefaults()
 			os.Exit(1)
 		}
-	}
-}
-
-type RedirectHandler struct {
-	stateStore storage.StateStore
-}
-
-func (h *RedirectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tokens := strings.SplitAfterN(r.URL.Path, "/", 2)
-	value, error := h.stateStore.Load(storage.StorageKey(tokens[1]))
-	if error != nil {
-		fmt.Fprintf(w, "Error: %v", error)
-	} else {
-		http.Redirect(w, r, value.(string), http.StatusTemporaryRedirect)
 	}
 }
