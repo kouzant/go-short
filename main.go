@@ -22,7 +22,7 @@ func main() {
 	clientMode := flag.NewFlagSet("client", flag.ExitOnError)
 	
 	// Client mode arguments
-	opArg := clientMode.String("operation", "add", "Operation (add | delete | list)")
+	opArg := clientMode.String("op", "add", "Operation (add | delete | list)")
 	keyArg := clientMode.String("key", "", "Shortened URL key")
 	valueArg := clientMode.String("url", "", "URL")
 
