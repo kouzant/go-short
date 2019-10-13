@@ -4,7 +4,7 @@ After = syslog.target network.target
 
 [Service]
 User = antonis
-ExecStart = /usr/share/go-short/go-short server
+ExecStart = /usr/local/go-short/go-short server
 
 Type = simple
 

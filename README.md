@@ -15,7 +15,7 @@ To install `go-short` download the binary from LINK_NEEDED. You can start the se
 
 In case you want the server to listen on a privileged port you should set the special capabilities for the binary file.
 
-    setcap 'cap_net_bind_service=+ep' /usr/share/go-short/go-short
+    setcap 'cap_net_bind_service=+ep' /usr/local/go-short/go-short
 
 `authbind` won't work as the binary is statically linked.
 
