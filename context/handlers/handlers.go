@@ -43,24 +43,37 @@ func (h *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch command.(type) {
 	case AddCommand:
-		err := h.StateStore.Save(storage.NewStorageItem(command.(AddCommand).key,
-			command.(AddCommand).url))
-		if err != nil {
-			http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
-			return
-		}
-		fmt.Fprintf(w, "Added <%s, %s> to store", command.(AddCommand).key,
-			command.(AddCommand).url)
+		add, _ := command.(AddCommand)
+		h.handleAddCommand(add, w)
 	case DeleteCommand:
-		value, err := h.StateStore.Delete(storage.StorageKey(command.(DeleteCommand).key))
-		if err != nil {
-			http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
-			return
-		}
-		fmt.Fprintf(w, "Deleted key %s", value)
+		delete := command.(DeleteCommand)
+		h.handleDeleteCommand(delete, w)
 	case ListCommand:
-		fmt.Println("ListCommand")
+		list := command.(ListCommand)
+		h.handleListCommand(list, w)
 	}
+}
+
+func (h *AdminHandler) handleAddCommand(command AddCommand, w http.ResponseWriter) {
+	err := h.StateStore.Save(storage.NewStorageItem(command.key, command.url))
+	if err != nil {
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "Added <%s, %s> to store", command.key, command.url)	
+}
+
+func (h *AdminHandler) handleDeleteCommand(command DeleteCommand, w http.ResponseWriter) {
+	value, err := h.StateStore.Delete(storage.StorageKey(command.key))
+	if err != nil {
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "Deleted key %s", value)	
+}
+
+func (h *AdminHandler) handleListCommand(command ListCommand, w http.ResponseWriter) {
+	fmt.Println("List command")
 }
 
 type AdminCommand interface{}

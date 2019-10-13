@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"testing"
-	"net/url"
+	"net/http"
 )
 
 func TestCommandParsing(t *testing.T) {
@@ -10,32 +10,33 @@ func TestCommandParsing(t *testing.T) {
 	shortenUrl := "https://github.com/kouzant/go-short"
 	var tests = []struct{
 		params string
+		method string
 		want AdminCommand
 	}{
-		{"op=add&key=gs&url=" + shortenUrl, AddCommand{"gs", shortenUrl}},
-		{"key=gs&url=" + shortenUrl, nil},
-		{"op=add&url=" + shortenUrl, nil},
-		{"op=add&key=gs", nil},
+		{"key=gs&url=" + shortenUrl, "POST", AddCommand{"gs", shortenUrl}},
+		{"url=" + shortenUrl, "POST", nil},
+		{"key=gs", "POST", nil},
+		{"", "POST", nil},
 
-		{"op=delete&key=gs", DeleteCommand{"gs"}},
-		{"key=gs", nil},
-		{"op=add", nil},
+		{"key=gs", "DELETE", DeleteCommand{"gs"}},
+		{"", "DELETE", nil},
 
-		{"op=list", ListCommand{}},
-		{"", nil},
+		{"", "GET", ListCommand{}},
 	}
 
 	for _, test := range tests {
-		reqUrl, err := url.Parse(baseUrl + test.params)
+		reqUrl := baseUrl + test.params
+		r, err := http.NewRequest(test.method, reqUrl, nil)
 		if err != nil {
-			t.Errorf("Error parsing url")
+			t.Errorf("Error creating new HTTP request %s", err)
 		}
-		command, err := parseAdminOp(reqUrl)
+		
+		command, err := parseAdminOp(r)
 		if err != nil && command != test.want {
-			t.Errorf("parsingAdminOp(%v) return error %v", reqUrl, err)
+			t.Errorf("parsingAdminOp(%v) return error %v", r, err)
 		}
 		if command != test.want {
-			t.Errorf("Expected %v gotten %v", test.want, command)
+			t.Errorf("parsingAdminOp(%v) Expected %v gotten %v", r, test.want, command)
 		}
 	}
 }
