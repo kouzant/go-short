@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"fmt"
 	"strings"
-	_ "errors"
+	"html/template"
 	
 	"github.com/kouzant/go-short/storage"
 	"github.com/kouzant/go-short/context"
@@ -31,6 +31,8 @@ func (h *RedirectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 /**
  * HTTP handler for administrative tasks
 */
+
+var list_all_template = template.Must(template.New("list").Parse(list_all_html))
 
 type AdminHandler struct {
 	StateStore storage.StateStore
@@ -91,7 +93,10 @@ func (h *AdminHandler) handleListCommand(command ListCommand, w http.ResponseWri
 		}
 		fmt.Fprint(w, buffer.String())
 	} else {
-		fmt.Fprint(w, "Not implemented yet")
+		err := list_all_template.Execute(w, storedItems)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -142,3 +147,58 @@ func parseAdminOp(r *http.Request) (AdminCommand, error) {
 		return nil, fmt.Errorf("Unknown method")
 	}
 }
+
+const list_all_html = `
+<html>
+ <head>
+   <style>
+     table {
+     font-family: arial, sans-serif;
+     border-collapse: collapse;
+     width: 80%;
+     }
+
+     td, th {
+     border: 1px solid #dddddd;
+     text-align: center;
+     padding: 8px;
+     }
+
+     .short {
+     border: 1px solid #dddddd;
+     text-align: center;
+     padding: 8px;
+     }
+
+     .long {
+     border: 1px solid #dddddd;
+     text-align: left;
+     padding: 8px;
+     }
+
+     tr:nth-child(even) {
+     background-color: #dddddd;
+     }
+   </style>
+ </head>
+ <body>
+    <div align="center">
+    <h1>go-shortened URLs: {{len .}}</h1>
+    <h3>If you have no idea what's this, go check project's <a href="https://github.com/kouzant/go-short" target="_blank">GitHub page</a></h3>
+    <table>
+      <tr>
+	<th>Shortened</th>
+	<th>URL</th>
+      </tr>
+
+{{range .}}
+      <tr>
+	<td class="short">{{.Key}}</td>
+	<td class="long"><a href="{{.Value}}">{{.Value}}</a></td>
+      </tr>
+{{end}}
+    </table>
+    </div>
+  </body>
+</html>
+`
