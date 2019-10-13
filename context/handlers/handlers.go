@@ -8,6 +8,7 @@ import (
 	_ "errors"
 	
 	"github.com/kouzant/go-short/storage"
+	"github.com/kouzant/go-short/context"
 )
 
 /**
@@ -50,7 +51,7 @@ func (h *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.handleDeleteCommand(delete, w)
 	case ListCommand:
 		list := command.(ListCommand)
-		h.handleListCommand(list, w)
+		h.handleListCommand(list, w, r.UserAgent())
 	}
 }
 
@@ -72,8 +73,26 @@ func (h *AdminHandler) handleDeleteCommand(command DeleteCommand, w http.Respons
 	fmt.Fprintf(w, "Deleted key %s", value)	
 }
 
-func (h *AdminHandler) handleListCommand(command ListCommand, w http.ResponseWriter) {
-	fmt.Println("List command")
+func (h *AdminHandler) handleListCommand(command ListCommand, w http.ResponseWriter,
+	userAgent string) {
+	storedItems, err := h.StateStore.LoadAll()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+		return
+	}
+	// If is's the CLI return simple string
+	// otherwise template an HTML page
+	if userAgent == context.CLI_USER_AGENT {
+		var buffer strings.Builder
+		fmt.Fprintf(&buffer, "> Number of stored items: %d\n", len(storedItems))
+
+		for _, item := range storedItems {
+			fmt.Fprintf(&buffer, "> Short: %s\t URL: %s\n", item.Key, item.Value)
+		}
+		fmt.Fprint(w, buffer.String())
+	} else {
+		fmt.Fprint(w, "Not implemented yet")
+	}
 }
 
 type AdminCommand interface{}

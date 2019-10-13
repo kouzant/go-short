@@ -21,6 +21,8 @@ const (
 	web = configRoot + "webserver."
 	WebListenKey = web + "listen"
 	WebPortKey = web + "port"
+
+	CLI_USER_AGENT = "go-short-cli"
 )
 
 func ReadConfig() *viper.Viper {

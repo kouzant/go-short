@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/signal"
 	"syscall"
+	"io/ioutil"
 	
 	"github.com/kouzant/go-short/context"
 	"github.com/kouzant/go-short/context/handlers"
@@ -44,14 +45,16 @@ func main() {
 	logger.Init(conf)
 	log.Info("Starting go-short")
 
-	stateStore := &storage.BadgerStateStore{Config: conf}
-	error := stateStore.Init()
-	if error != nil {
-		log.Fatal("Could not initialize state store ", error)
-	}
-	defer stateStore.Close()
-
+	listeningOn := fmt.Sprintf("%s:%d", conf.GetString(context.WebListenKey),
+		conf.GetInt(context.WebPortKey))	
 	if serverMode.Parsed() {
+		stateStore := &storage.BadgerStateStore{Config: conf}
+		error := stateStore.Init()
+		if error != nil {
+			log.Fatal("Could not initialize state store ", error)
+		}
+		defer stateStore.Close()
+
 		// Trap exit signal
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -71,9 +74,7 @@ func main() {
 		adminHandler := &handlers.AdminHandler{StateStore: stateStore}
 		mux.Handle("/", redirectHandler)
 		mux.Handle("/_admin", adminHandler)
-		
-		listeningOn := fmt.Sprintf("%s:%d", conf.GetString(context.WebListenKey),
-			conf.GetInt(context.WebPortKey))
+
 		log.Info("Start listening on ", listeningOn)
 		log.Fatal(http.ListenAndServe(listeningOn, mux))
 	} else if clientMode.Parsed() {
@@ -83,36 +84,76 @@ func main() {
 				clientMode.PrintDefaults()
 				os.Exit(1)
 			}
-			err := stateStore.Save(storage.NewStorageItem(*keyArg, *valueArg))
-			if err != nil {
-				fmt.Printf("> ERROR: Save operation could not complete, reason: %s\n", err)
-				os.Exit(3)
-			}
-			fmt.Println("> Added <", *keyArg, ", ", *valueArg, "> to go-short!")
+			doAddRequest(listeningOn, *keyArg, *valueArg)
 		case "delete":
 			if *keyArg == "" {
 				clientMode.PrintDefaults()
 				os.Exit(2)
 			}
-			value, err := stateStore.Delete(storage.StorageKey(*keyArg))
-			if err != nil {
-				fmt.Printf("> ERROR: Could not delete key %s reason: %s\n", *keyArg, err)
-				os.Exit(3)
-			}
-			fmt.Println("> Deleted ", value, " from go-short!")
+			doDeleteRequest(listeningOn, *keyArg)
 		case "list":
-			storedItems, err := stateStore.LoadAll()
-			if err != nil {
-				fmt.Printf("> ERROR: Could not list all URLs, reason %s\n", err)
-				os.Exit(3)
-			}
-			fmt.Printf("> Number of shortened URLs: %d\n", len(storedItems))
-			for _, item := range storedItems {
-				fmt.Printf("> Short: %s\t URL: %s\n", item.Key, item.Value)
-			}
+			doListRequest(listeningOn)
 		default:
 			clientMode.PrintDefaults()
 			os.Exit(1)
 		}
+	}
+}
+
+func doAddRequest(url, key, value string) {
+	reqUrl := fmt.Sprintf("http://%s/_admin?key=%s&url=%s", url, key, value)
+	statusCode, body := doRequest("POST", reqUrl)
+	
+	if statusCode == http.StatusOK {
+		fmt.Println(string(body))
+	} else {
+		fmt.Printf("> ERROR: %s\n", body)
+		os.Exit(3)
+	}
+}
+
+func doDeleteRequest(url, key string) {
+	reqUrl := fmt.Sprintf("http://%s/_admin?key=%s", url, key)
+	statusCode, body := doRequest("DELETE", reqUrl)
+
+	if statusCode == http.StatusOK {
+		fmt.Println(string(body))
+	} else {
+		fmt.Printf("> ERROR: %s\n", body)
+		os.Exit(3)
+	}
+}
+
+func doListRequest(url string) {
+	reqUrl := fmt.Sprintf("http://%s/_admin", url)
+	statusCode, body := doRequest("GET", reqUrl)
+
+	if statusCode == http.StatusOK {
+		fmt.Println(string(body))
+	} else {
+		fmt.Printf("> ERROR: %s\n", body)
+		os.Exit(3)
+	}
+}
+
+func doRequest(method, url string) (int, []byte) {
+	client := http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+	handleClientError(method, err)
+	req.Header.Add("User-Agent", context.CLI_USER_AGENT)
+	resp, err := client.Do(req)
+	handleClientError("add", err)
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	handleClientError(method, err)
+	
+	return resp.StatusCode, body
+}
+
+func handleClientError(op string, err error) {
+	if err != nil {
+		fmt.Printf("> ERROR: Could not %s item, reason %s\n", op, err)
+		os.Exit(3)
 	}
 }
