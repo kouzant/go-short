@@ -7,7 +7,7 @@ associated normal URL.
 ### Table of contents
 1. [Installation](#installation)
 2. [Configuration](#configuraiton)
-3. [Usage](usage)
+3. [Usage](#usage)
 
 ### Installation
 To install `go-short` download the binary from LINK_NEEDED. You can start the server with `./go-short server`. In the _resources/_ folder there is a sample systemd unit file if you want to start it through systemd.
