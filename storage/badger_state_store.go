@@ -2,17 +2,17 @@ package storage
 
 import (
 	"time"
-	
+
 	"github.com/kouzant/go-short/context"
-	
-	"github.com/spf13/viper"
+
 	badger "github.com/dgraph-io/badger"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type BadgerStateStore struct {
 	Config *viper.Viper
-	db *badger.DB
+	db     *badger.DB
 	ticker *time.Ticker
 }
 
@@ -32,7 +32,7 @@ func (s *BadgerStateStore) Init() error {
 	}
 	s.ticker = time.NewTicker(gcInterval)
 	go s.startGCRoutine()
-	
+
 	return nil
 }
 
@@ -86,7 +86,7 @@ func (s *BadgerStateStore) Load(key StorageKey) (StorageValue, error) {
 
 func (s *BadgerStateStore) LoadAll() ([]*StorageItem, error) {
 	storedItems := make([]*StorageItem, 0, 100)
-	
+
 	err := s.db.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
@@ -117,12 +117,12 @@ func (s *BadgerStateStore) Delete(key StorageKey) (StorageValue, error) {
 		}
 		return nil, err
 	}
-	
+
 	err = s.db.Update(func(txn *badger.Txn) error {
 		err = txn.Delete([]byte(string(key)))
 		return err
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}

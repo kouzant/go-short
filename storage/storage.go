@@ -6,7 +6,7 @@ type StorageKey string
 type StorageValue interface{}
 
 type StorageItem struct {
-	Key StorageKey
+	Key   StorageKey
 	Value StorageValue
 }
 

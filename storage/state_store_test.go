@@ -1,18 +1,18 @@
 package storage
 
 import (
-	"testing"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/kouzant/go-short/context"
+	"github.com/spf13/viper"
 )
 
 func TestWriteRead(t *testing.T) {
 	testWriteReadBadger(t)
-	testWriteReadMemory(t)	
+	testWriteReadMemory(t)
 }
 
 func TestListAll(t *testing.T) {
@@ -26,13 +26,13 @@ func TestDelete(t *testing.T) {
 }
 
 func testWriteRead(t *testing.T, stateStore StateStore) {
-	var tests = []struct{
-		key string
-		value string
-		want StorageValue
+	var tests = []struct {
+		key         string
+		value       string
+		want        StorageValue
 		shouldWrite bool
-		saveError error
-		loadError error
+		saveError   error
+		loadError   error
 	}{
 		{"key0", "value0", "value0", true, nil, nil},
 		{"key1", "value1", "value1", true, nil, nil},
@@ -58,11 +58,11 @@ func testWriteRead(t *testing.T, stateStore StateStore) {
 			t.Errorf("stateStore.Load(%v) expected value %v - gotten %v",
 				item, test.want, value)
 		}
-	}	
+	}
 }
 
 type A struct {
-	key string
+	key   string
 	value string
 }
 
@@ -127,7 +127,7 @@ func testDelete(t *testing.T, stateStore StateStore) {
 	_, error = stateStore.Load(item.Key)
 	if _, ok := error.(KeyNotFound); !ok {
 		t.Errorf("Load(%v) after Delete(%v) expected %v", item, item, KeyNotFound{})
-	}	
+	}
 }
 
 func testWriteReadBadger(t *testing.T) {
@@ -160,13 +160,13 @@ func testDeleteBadger(t *testing.T) {
 	stateStore, dir := createBadgerStateStore(t)
 	defer os.RemoveAll(dir)
 	defer stateStore.Close()
-	testDelete(t, stateStore)	
+	testDelete(t, stateStore)
 }
 
 func testDeleteMemory(t *testing.T) {
 	stateStore := createMemoryStateStore(t)
 	defer stateStore.Close()
-	testDelete(t, stateStore)	
+	testDelete(t, stateStore)
 }
 
 func createBadgerStateStore(t *testing.T) (StateStore, string) {

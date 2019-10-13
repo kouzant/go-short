@@ -1,15 +1,14 @@
 package logger
 
 import (
-	"os"
 	"fmt"
+	"os"
 
 	"github.com/kouzant/go-short/context"
-	
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
-
 
 func Init(config *viper.Viper) {
 	log_level := config.GetString(context.LogLevelKey)

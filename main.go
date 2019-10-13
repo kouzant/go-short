@@ -2,25 +2,24 @@ package main
 
 import (
 	"flag"
-	"os"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
-	"io/ioutil"
-	
+
 	"github.com/kouzant/go-short/context"
 	"github.com/kouzant/go-short/context/handlers"
 	"github.com/kouzant/go-short/logger"
-	"github.com/kouzant/go-short/storage"	
-	log "github.com/sirupsen/logrus"	
+	"github.com/kouzant/go-short/storage"
+	log "github.com/sirupsen/logrus"
 )
-
 
 func main() {
 	serverMode := flag.NewFlagSet("server", flag.ExitOnError)
 	clientMode := flag.NewFlagSet("client", flag.ExitOnError)
-	
+
 	// Client mode arguments
 	opArg := clientMode.String("op", "add", "Operation (add | delete | list)")
 	keyArg := clientMode.String("key", "", "Shortened URL key")
@@ -40,13 +39,13 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	
+
 	conf := context.ReadConfig()
 	logger.Init(conf)
 	log.Info("Starting go-short")
 
 	listeningOn := fmt.Sprintf("%s:%d", conf.GetString(context.WebListenKey),
-		conf.GetInt(context.WebPortKey))	
+		conf.GetInt(context.WebPortKey))
 	if serverMode.Parsed() {
 		stateStore := &storage.BadgerStateStore{Config: conf}
 		error := stateStore.Init()
@@ -58,8 +57,8 @@ func main() {
 		// Trap exit signal
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		go func(){
-			sig := <- sigs
+		go func() {
+			sig := <-sigs
 			log.Infof("Received %s\n", sig)
 			if error := stateStore.Close(); error != nil {
 				log.Errorf("Error closing the state store %s\n", error)
@@ -68,7 +67,7 @@ func main() {
 			log.Info("Bye...")
 			os.Exit(0)
 		}()
-		
+
 		mux := http.NewServeMux()
 		redirectHandler := &handlers.RedirectHandler{StateStore: stateStore}
 		adminHandler := &handlers.AdminHandler{StateStore: stateStore}
@@ -103,7 +102,7 @@ func main() {
 func doAddRequest(url, key, value string) {
 	reqUrl := fmt.Sprintf("http://%s/_admin?key=%s&url=%s", url, key, value)
 	statusCode, body := doRequest("POST", reqUrl)
-	
+
 	if statusCode == http.StatusOK {
 		fmt.Println(string(body))
 	} else {
@@ -147,7 +146,7 @@ func doRequest(method, url string) (int, []byte) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	handleClientError(method, err)
-	
+
 	return resp.StatusCode, body
 }
 

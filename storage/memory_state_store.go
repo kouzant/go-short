@@ -1,13 +1,13 @@
 package storage
 
 import (
-	"github.com/spf13/viper"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type MemoryStateStore struct {
 	Config *viper.Viper
-	db map[StorageKey]StorageValue
+	db     map[StorageKey]StorageValue
 }
 
 func (s *MemoryStateStore) Init() error {

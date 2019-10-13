@@ -1,17 +1,17 @@
 package handlers
 
 import (
-	"testing"
 	"net/http"
+	"testing"
 )
 
 func TestCommandParsing(t *testing.T) {
 	baseUrl := "http://go/_admin?"
 	shortenUrl := "https://github.com/kouzant/go-short"
-	var tests = []struct{
+	var tests = []struct {
 		params string
 		method string
-		want AdminCommand
+		want   AdminCommand
 	}{
 		{"key=gs&url=" + shortenUrl, "POST", AddCommand{"gs", shortenUrl}},
 		{"url=" + shortenUrl, "POST", nil},
@@ -30,7 +30,7 @@ func TestCommandParsing(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error creating new HTTP request %s", err)
 		}
-		
+
 		command, err := parseAdminOp(r)
 		if err != nil && command != test.want {
 			t.Errorf("parsingAdminOp(%v) return error %v", r, err)

@@ -1,19 +1,19 @@
 package handlers
 
 import (
+	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
-	"fmt"
 	"strings"
-	"html/template"
-	
-	"github.com/kouzant/go-short/storage"
+
 	"github.com/kouzant/go-short/context"
+	"github.com/kouzant/go-short/storage"
 )
 
 /**
  * HTTP handler for redirecting requests
-*/
+ */
 type RedirectHandler struct {
 	StateStore storage.StateStore
 }
@@ -25,12 +25,12 @@ func (h *RedirectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Error: %v", error)
 	} else {
 		http.Redirect(w, r, value.(string), http.StatusTemporaryRedirect)
-	}	
+	}
 }
 
 /**
  * HTTP handler for administrative tasks
-*/
+ */
 
 var list_all_template = template.Must(template.New("list").Parse(list_all_html))
 
@@ -63,7 +63,7 @@ func (h *AdminHandler) handleAddCommand(command AddCommand, w http.ResponseWrite
 		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "Added <%s, %s> to store", command.key, command.url)	
+	fmt.Fprintf(w, "Added <%s, %s> to store", command.key, command.url)
 }
 
 func (h *AdminHandler) handleDeleteCommand(command DeleteCommand, w http.ResponseWriter) {
@@ -72,7 +72,7 @@ func (h *AdminHandler) handleDeleteCommand(command DeleteCommand, w http.Respons
 		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "Deleted key %s", value)	
+	fmt.Fprintf(w, "Deleted key %s", value)
 }
 
 func (h *AdminHandler) handleListCommand(command ListCommand, w http.ResponseWriter,
@@ -113,8 +113,6 @@ type DeleteCommand struct {
 
 type ListCommand struct {
 }
-
-
 
 func parseAdminOp(r *http.Request) (AdminCommand, error) {
 	values, err := url.ParseQuery(r.URL.RawQuery)
