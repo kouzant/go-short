@@ -11,7 +11,7 @@ associated normal URL.
 4. [Development](#development)
 
 ### Installation
-To install `go-short` download the binary from LINK_NEEDED. You can start the server with `./go-short server`. In the _resources/_ folder there is a sample systemd unit file if you want to start it through systemd.
+To install `go-short` download the binary from [here](https://github.com/kouzant/go-short/releases). You can start the server with `./go-short server`. In the _resources/_ folder there is a sample systemd unit file if you want to start it through systemd.
 
 In case you want the server to listen on a privileged port you should set the special capabilities for the binary file.
 
