@@ -39,7 +39,7 @@ Both the server and the client will look for a configuration file in `$HOME/.go-
 You will also need to change _/etc/hosts_ so that **go** (or anything else) domain name will resolve to localhost.
 It should look like the following:
 
-> 127.0.0.1	localhost go
+    127.0.0.1	localhost go
 
 ### Usage
 There two main commands, `server` which will start the server and `client` which performs operations on the server such as
