@@ -8,6 +8,7 @@ associated normal URL.
 1. [Installation](#installation)
 2. [Configuration](#configuration)
 3. [Usage](#usage)
+4. [Development](#development)
 
 ### Installation
 To install `go-short` download the binary from LINK_NEEDED. You can start the server with `./go-short server`. In the _resources/_ folder there is a sample systemd unit file if you want to start it through systemd.
@@ -59,3 +60,9 @@ There two main commands, `server` which will start the server and `client` which
 After you've added a short URL, go to your browser and type `go/gs`. It will redirect you to [https://github.com/kouzant/go-short](https://github.com/kouzant/go-short)
 
 You can also list the shortened URLs in a nicer(?) way by visiting `go/_admin`
+
+### Development
+`go-short` is written in Go 1.13 and is using [Badger](https://github.com/dgraph-io/badger) as a persistent state store. To run all the tests execute `go test ./...` or if you want the tests of a specific package
+e.g. `go test github.com/kouzant/go-short/storage`
+
+To buld it run `go build`
