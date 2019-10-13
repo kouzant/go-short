@@ -1,12 +1,12 @@
 ## go-short
 
-`go-short` is a simple URL shortener for personal usage. It starts a an HTTP server and redirects shortened URLs to their
+`go-short` is a simple URL shortener for personal usage. It starts an HTTP server and redirects shortened URLs to their
 associated normal URL.
 
 
 ### Table of contents
 1. [Installation](#installation)
-2. [Configuration](#configuraiton)
+2. [Configuration](#configuration)
 3. [Usage](#usage)
 
 ### Installation
@@ -47,7 +47,7 @@ There two main commands, `server` which will start the server and `client` which
     ./go-short client
       -key string
     	    Shortened URL key
-      -operation string
+      -op string
     	    Operation (add | delete | list) (default "add")
       -url string
     	    URL
