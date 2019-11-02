@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -54,6 +55,9 @@ func (h *AdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case ListCommand:
 		list := command.(ListCommand)
 		h.handleListCommand(list, w, r.UserAgent())
+	case AddBatchCommand:
+		addBatch := command.(AddBatchCommand)
+		h.handleAddBatchCommand(addBatch, w)
 	}
 }
 
@@ -64,6 +68,30 @@ func (h *AdminHandler) handleAddCommand(command AddCommand, w http.ResponseWrite
 		return
 	}
 	fmt.Fprintf(w, "Added <%s, %s> to store", command.key, command.url)
+}
+
+func (h *AdminHandler) handleAddBatchCommand(command AddBatchCommand, w http.ResponseWriter) {
+	if len(command.pairs) == 0 {
+		http.Error(w, "No parameters passed", http.StatusBadRequest)
+		return
+	}
+	items := make([]*storage.StorageItem, 0, len(command.pairs))
+	for _, p := range command.pairs {
+		tokens := strings.Split(p, ",")
+		if len(tokens) != 2 {
+			continue
+		}
+		items = append(items, storage.NewStorageItem(tokens[0], tokens[1]))
+	}
+	if len(items) == 0 {
+		http.Error(w, "No parameters passed", http.StatusBadRequest)
+		return
+	}
+	err := h.StateStore.SaveAll(items)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+	}
+	fmt.Fprintf(w, "Added pairs to store")
 }
 
 func (h *AdminHandler) handleDeleteCommand(command DeleteCommand, w http.ResponseWriter) {
@@ -114,6 +142,10 @@ type DeleteCommand struct {
 type ListCommand struct {
 }
 
+type AddBatchCommand struct {
+	pairs []string
+}
+
 func parseAdminOp(r *http.Request) (AdminCommand, error) {
 	values, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
@@ -141,6 +173,14 @@ func parseAdminOp(r *http.Request) (AdminCommand, error) {
 	case "GET":
 		// List all
 		return ListCommand{}, nil
+	case "PUT":
+		// Add batch
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return nil, fmt.Errorf("Add batch request is missing body")
+		}
+		pairs := strings.Split(strings.TrimSpace(string(body)), "\n")
+		return AddBatchCommand{pairs: pairs}, nil
 	default:
 		return nil, fmt.Errorf("Unknown method")
 	}

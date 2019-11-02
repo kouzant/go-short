@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -21,9 +24,10 @@ func main() {
 	clientMode := flag.NewFlagSet("client", flag.ExitOnError)
 
 	// Client mode arguments
-	opArg := clientMode.String("op", "add", "Operation (add | delete | list)")
+	opArg := clientMode.String("op", "add", "Operation (add | delete | list | add-batch)")
 	keyArg := clientMode.String("key", "", "Shortened URL key")
 	valueArg := clientMode.String("url", "", "URL")
+	batchFileArg := clientMode.String("file", "", "Path to CSV file key,URL")
 
 	if len(os.Args) < 2 {
 		fmt.Printf("Usage: %s [server | client] ...\n", os.Args[0])
@@ -87,11 +91,18 @@ func main() {
 		case "delete":
 			if *keyArg == "" {
 				clientMode.PrintDefaults()
-				os.Exit(2)
+				os.Exit(1)
 			}
 			doDeleteRequest(listeningOn, *keyArg)
 		case "list":
 			doListRequest(listeningOn)
+		case "add-batch":
+			if *batchFileArg == "" {
+				fmt.Printf("> ERROR: Missing -file argument")
+				clientMode.PrintDefaults()
+				os.Exit(1)
+			}
+			doBatchAddRequest(listeningOn, *batchFileArg)
 		default:
 			clientMode.PrintDefaults()
 			os.Exit(1)
@@ -101,7 +112,7 @@ func main() {
 
 func doAddRequest(url, key, value string) {
 	reqUrl := fmt.Sprintf("http://%s/_admin?key=%s&url=%s", url, key, value)
-	statusCode, body := doRequest("POST", reqUrl)
+	statusCode, body := doRequest("POST", reqUrl, nil)
 
 	if statusCode == http.StatusOK {
 		fmt.Println(string(body))
@@ -113,7 +124,7 @@ func doAddRequest(url, key, value string) {
 
 func doDeleteRequest(url, key string) {
 	reqUrl := fmt.Sprintf("http://%s/_admin?key=%s", url, key)
-	statusCode, body := doRequest("DELETE", reqUrl)
+	statusCode, body := doRequest("DELETE", reqUrl, nil)
 
 	if statusCode == http.StatusOK {
 		fmt.Println(string(body))
@@ -125,7 +136,7 @@ func doDeleteRequest(url, key string) {
 
 func doListRequest(url string) {
 	reqUrl := fmt.Sprintf("http://%s/_admin", url)
-	statusCode, body := doRequest("GET", reqUrl)
+	statusCode, body := doRequest("GET", reqUrl, nil)
 
 	if statusCode == http.StatusOK {
 		fmt.Println(string(body))
@@ -135,9 +146,35 @@ func doListRequest(url string) {
 	}
 }
 
-func doRequest(method, url string) (int, []byte) {
+func doBatchAddRequest(url, path string) {
+	fd, err := os.Open(path)
+	if err != nil {
+		fmt.Printf("> ERROR: Could not open file %s\n", err)
+	}
+	defer fd.Close()
+	scanner := bufio.NewScanner(fd)
+	var b bytes.Buffer
+	for scanner.Scan() {
+		text := fmt.Sprintf("%s\n", scanner.Text())
+		b.WriteString(text)
+	}
+
+	reqUrl := fmt.Sprintf("http://%s/_admin", url)
+	var r io.Reader
+	r = &b
+	statusCode, body := doRequest("PUT", reqUrl, r)
+
+	if statusCode == http.StatusOK {
+		fmt.Println(string(body))
+	} else {
+		fmt.Printf("> ERROR: %s\n", body)
+		os.Exit(3)
+	}
+}
+
+func doRequest(method, url string, reqBody io.Reader) (int, []byte) {
 	client := http.Client{}
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequest(method, url, reqBody)
 	handleClientError(method, err)
 	req.Header.Add("User-Agent", context.CLI_USER_AGENT)
 	resp, err := client.Do(req)

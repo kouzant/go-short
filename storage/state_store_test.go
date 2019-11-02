@@ -40,6 +40,16 @@ func testWriteBatch(t *testing.T, stateStore StateStore) {
 	if err != nil {
 		t.Errorf("stateStore.SaveAll(%v) returned error %v", items, err)
 	}
+
+	for _, i := range items {
+		value, err := stateStore.Load(i.Key)
+		if err != nil {
+			t.Errorf("stateStore.Load(%v) returned error %v", i.Key, err)
+		}
+		if value != i.Value {
+			t.Errorf("Loaded value %s is different than %s", value, i.Value)
+		}
+	}
 }
 
 func testWriteRead(t *testing.T, stateStore StateStore) {

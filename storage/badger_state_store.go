@@ -68,7 +68,9 @@ func (s *BadgerStateStore) SaveAll(items []*StorageItem) error {
 
 	for _, i := range items {
 		err := wb.Set([]byte(string(i.Key)), []byte(i.Value.(string)))
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	return wb.Flush()
 }

@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -10,23 +12,26 @@ func TestCommandParsing(t *testing.T) {
 	shortenUrl := "https://github.com/kouzant/go-short"
 	var tests = []struct {
 		params string
+		body   string
 		method string
 		want   AdminCommand
 	}{
-		{"key=gs&url=" + shortenUrl, "POST", AddCommand{"gs", shortenUrl}},
-		{"url=" + shortenUrl, "POST", nil},
-		{"key=gs", "POST", nil},
-		{"", "POST", nil},
+		{"key=gs&url=" + shortenUrl, "", "POST", AddCommand{"gs", shortenUrl}},
+		{"url=" + shortenUrl, "", "POST", nil},
+		{"key=gs", "", "POST", nil},
+		{"", "", "POST", nil},
 
-		{"key=gs", "DELETE", DeleteCommand{"gs"}},
-		{"", "DELETE", nil},
+		{"key=gs", "", "DELETE", DeleteCommand{"gs"}},
+		{"", "", "DELETE", nil},
 
-		{"", "GET", ListCommand{}},
+		{"", "", "GET", ListCommand{}},
+
+		{"", "key0,val0\nkey1,val1", "PUT", AddBatchCommand{[]string{"key0,val0", "key1,val1"}}},
 	}
 
 	for _, test := range tests {
 		reqUrl := baseUrl + test.params
-		r, err := http.NewRequest(test.method, reqUrl, nil)
+		r, err := http.NewRequest(test.method, reqUrl, string2Reader(test.body))
 		if err != nil {
 			t.Errorf("Error creating new HTTP request %s", err)
 		}
@@ -35,8 +40,38 @@ func TestCommandParsing(t *testing.T) {
 		if err != nil && command != test.want {
 			t.Errorf("parsingAdminOp(%v) return error %v", r, err)
 		}
-		if command != test.want {
-			t.Errorf("parsingAdminOp(%v) Expected %v gotten %v", r, test.want, command)
+
+		switch command.(type) {
+		case AddBatchCommand:
+			if !compareAddBatchCommand(command.(AddBatchCommand), test.want.(AddBatchCommand)) {
+				t.Errorf("Expected parsed AddBatchCommand %v to equal %v", command, test.want)
+			}
+		default:
+			if command != test.want {
+				t.Errorf("parsingAdminOp(%v) Expected %v gotten %v", r, test.want, command)
+			}
 		}
 	}
+}
+
+func compareAddBatchCommand(command, want AddBatchCommand) bool {
+	for _, wantPair := range want.pairs {
+		pairFound := false
+		for _, commandPair := range command.pairs {
+			if wantPair == commandPair {
+				pairFound = true
+				break
+			}
+		}
+		if !pairFound {
+			return false
+		}
+	}
+	return true
+}
+func string2Reader(str string) io.Reader {
+	if str == "" {
+		return nil
+	}
+	return strings.NewReader(str)
 }
