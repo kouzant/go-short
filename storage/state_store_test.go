@@ -25,6 +25,23 @@ func TestDelete(t *testing.T) {
 	testDeleteMemory(t)
 }
 
+func TestWriteBatch(t *testing.T) {
+	testWriteBatchBadger(t)
+	testWriteBatchMemory(t)
+}
+
+func testWriteBatch(t *testing.T, stateStore StateStore) {
+	numOfItems := 10
+	items := make([]*StorageItem, 0, numOfItems)
+	for i := 0; i < numOfItems; i++ {
+		items = append(items, NewStorageItem(fmt.Sprintf("key_%d", i), fmt.Sprintf("value_%d", i)))
+	}
+	err := stateStore.SaveAll(items)
+	if err != nil {
+		t.Errorf("stateStore.SaveAll(%v) returned error %v", items, err)
+	}
+}
+
 func testWriteRead(t *testing.T, stateStore StateStore) {
 	var tests = []struct {
 		key         string
@@ -141,6 +158,19 @@ func testWriteReadMemory(t *testing.T) {
 	stateStore := createMemoryStateStore(t)
 	defer stateStore.Close()
 	testWriteRead(t, stateStore)
+}
+
+func testWriteBatchBadger(t *testing.T) {
+	stateStore, dir := createBadgerStateStore(t)
+	defer os.RemoveAll(dir)
+	defer stateStore.Close()
+	testWriteBatch(t, stateStore)
+}
+
+func testWriteBatchMemory(t *testing.T) {
+	stateStore := createMemoryStateStore(t)
+	defer stateStore.Close()
+	testWriteBatch(t, stateStore)
 }
 
 func testListAllBadger(t *testing.T) {

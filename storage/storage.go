@@ -1,6 +1,8 @@
 package storage
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type StorageKey string
 type StorageValue interface{}
@@ -33,6 +35,7 @@ func (e KeyNotFound) Error() string {
 type StateStore interface {
 	Init() error
 	Save(item *StorageItem) error
+	SaveAll(items []*StorageItem) error
 	Load(key StorageKey) (StorageValue, error)
 	LoadAll() ([]*StorageItem, error)
 	Delete(key StorageKey) (StorageValue, error)

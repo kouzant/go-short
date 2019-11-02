@@ -62,6 +62,17 @@ func (s *BadgerStateStore) Save(item *StorageItem) error {
 	return err
 }
 
+func (s *BadgerStateStore) SaveAll(items []*StorageItem) error {
+	wb := s.db.NewWriteBatch()
+	defer wb.Cancel()
+
+	for _, i := range items {
+		err := wb.Set([]byte(string(i.Key)), []byte(i.Value.(string)))
+		return err
+	}
+	return wb.Flush()
+}
+
 func (s *BadgerStateStore) Load(key StorageKey) (StorageValue, error) {
 	var valueCopy []byte
 	err := s.db.View(func(txn *badger.Txn) error {

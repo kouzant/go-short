@@ -24,6 +24,14 @@ func (s *MemoryStateStore) Save(item *StorageItem) error {
 	return nil
 }
 
+func (s *MemoryStateStore) SaveAll(items []*StorageItem) error {
+	for _, i := range items {
+		s.db[i.Key] = i.Value
+	}
+
+	return nil
+}
+
 func (s *MemoryStateStore) Load(key StorageKey) (StorageValue, error) {
 	if value, ok := s.db[key]; ok {
 		return value, nil
