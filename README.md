@@ -46,16 +46,19 @@ There two main commands, `server` which will start the server and `client` which
 `add`, `delete` and `list`. `server` mode does not take any other arguments. `client` has the following sub-commands:
 
     ./go-short client
+      -file string
+    	    Path to CSV file key,URL
       -key string
     	    Shortened URL key
       -op string
-    	    Operation (add | delete | list) (default "add")
+    	    Operation (add | delete | list | add-batch) (default "add")
       -url string
     	    URL
           
 * To add a new short URL type `./go-short client -key gs -url https://github.com/kouzant/go-short`
 * To list all shortened URLs type `./go-short client -op list` or use the web UI shown below
 * To delete a URL type `./go-short client -op delete -key gs`
+* To add batch entries from a CSV file type `./go-short client -op add-batch -file FILE_PATH`
 
 After you've added a short URL, go to your browser and type `go/gs`. It will redirect you to [https://github.com/kouzant/go-short](https://github.com/kouzant/go-short)
 
