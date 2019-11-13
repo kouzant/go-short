@@ -77,11 +77,7 @@ func (h *AdminHandler) handleAddBatchCommand(command AddBatchCommand, w http.Res
 	}
 	items := make([]*storage.StorageItem, 0, len(command.pairs))
 	for _, p := range command.pairs {
-		tokens := strings.Split(p, ",")
-		if len(tokens) != 2 {
-			continue
-		}
-		items = append(items, storage.NewStorageItem(tokens[0], tokens[1]))
+		items = append(items, storage.NewStorageItem(p.Left.(string), p.Right.(string)))
 	}
 	if len(items) == 0 {
 		http.Error(w, "No parameters passed", http.StatusBadRequest)
@@ -143,7 +139,7 @@ type ListCommand struct {
 }
 
 type AddBatchCommand struct {
-	pairs []string
+	pairs []*storage.Pair
 }
 
 func parseAdminOp(r *http.Request) (AdminCommand, error) {
@@ -179,7 +175,16 @@ func parseAdminOp(r *http.Request) (AdminCommand, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Add batch request is missing body")
 		}
-		pairs := strings.Split(strings.TrimSpace(string(body)), "\n")
+		pairs := make([]*storage.Pair, 0)
+		lines := strings.Split(strings.TrimSpace(string(body)), "\n")
+		for _, v := range lines {
+			tokens := strings.Split(v, ",")
+			if len(tokens) != 2 {
+				continue
+			}
+			pair := &storage.Pair{Left: tokens[0], Right: tokens[1]}
+			pairs = append(pairs, pair)
+		}
 		return AddBatchCommand{pairs: pairs}, nil
 	default:
 		return nil, fmt.Errorf("Unknown method")

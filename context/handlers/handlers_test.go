@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/kouzant/go-short/storage"
 )
 
 func TestCommandParsing(t *testing.T) {
@@ -26,7 +28,7 @@ func TestCommandParsing(t *testing.T) {
 
 		{"", "", "GET", ListCommand{}},
 
-		{"", "key0,val0\nkey1,val1", "PUT", AddBatchCommand{[]string{"key0,val0", "key1,val1"}}},
+		{"", "key0,val0\nkey1,val1", "PUT", AddBatchCommand{[]*storage.Pair{&storage.Pair{Left: "key0", Right: "val0"}, &storage.Pair{Left: "key1", Right: "val1"}}}},
 	}
 
 	for _, test := range tests {
@@ -58,7 +60,7 @@ func compareAddBatchCommand(command, want AddBatchCommand) bool {
 	for _, wantPair := range want.pairs {
 		pairFound := false
 		for _, commandPair := range command.pairs {
-			if wantPair == commandPair {
+			if wantPair.Left == commandPair.Left && wantPair.Right == commandPair.Right {
 				pairFound = true
 				break
 			}

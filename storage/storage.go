@@ -12,6 +12,11 @@ type StorageItem struct {
 	Value StorageValue
 }
 
+type Pair struct {
+	Left  interface{}
+	Right interface{}
+}
+
 func NewStorageItem(key, value string) *StorageItem {
 	return &StorageItem{StorageKey(key), StorageValue(value)}
 }
