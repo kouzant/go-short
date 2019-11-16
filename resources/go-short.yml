@@ -1,0 +1,8 @@
+go-short:
+  log-level: info
+  state-store:
+   path: /state_store
+   gc-interval: 2h
+  webserver:
+   listen: 0.0.0.0
+   port: 8080
