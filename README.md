@@ -19,6 +19,10 @@ In case you want the server to listen on a privileged port you should set the sp
 
 `authbind` won't work as the binary is statically linked.
 
+#### Docker
+You can also run `go-short` server in a Docker container instead of running it directly in your host. Follow the instructions
+on [Docker Hub](https://hub.docker.com/repository/docker/kouzan/go-short).
+
 ### Configuration
 Both the server and the client will look for a configuration file in `$HOME/.go-short/go-short.yml` Configuration is the following
 
@@ -69,3 +73,5 @@ You can also list the shortened URLs in a nicer(?) way by visiting `go/_admin`
 e.g. `go test github.com/kouzant/go-short/storage`
 
 To buld it run `go build`
+
+To build the Docker image run `docker build -t kouzan/go-short:VERSION -f resources/Dockerfile .`
