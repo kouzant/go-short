@@ -21,7 +21,7 @@ In case you want the server to listen on a privileged port you should set the sp
 
 #### Docker
 You can also run `go-short` server in a Docker container instead of running it directly in your host. Follow the instructions
-on [Docker Hub](https://hub.docker.com/repository/docker/kouzan/go-short).
+on [Docker Hub](https://hub.docker.com/r/kouzan/go-short).
 
 ### Configuration
 Both the server and the client will look for a configuration file in `$HOME/.go-short/go-short.yml` Configuration is the following
