@@ -2,9 +2,9 @@ FROM golang:buster as builder
 
 WORKDIR /go-short
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o go-short
+RUN CGO_ENABLED=0 go build -a -o go-short
 
-FROM alpine:latest as runner
+FROM alpine:latest
 
 RUN mkdir $HOME/.go-short
 COPY resources/go-short.yml /root/.go-short
